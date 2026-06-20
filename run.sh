@@ -13,6 +13,7 @@ fi
 REPO_URL="https://github.com/rokkiBalboa-sourse/pve_check.git"
 RAW_URL="https://raw.githubusercontent.com/rokkiBalboa-sourse/pve_check/main"
 TARGET_DIR="/root/pve_checks"
+SCRIPT_DIR="$TARGET_DIR/pve_checks"
 
 echo -e "\033[0;36m[+] Подготовка DEMOEXAM-CHECKER...\033[0m"
 
@@ -35,7 +36,6 @@ if command -v git &> /dev/null; then
     fi
 else
     echo -e "\033[1;33m[!] Git не установлен. Скачивание файлов через curl...\033[0m"
-    mkdir -p "$TARGET_DIR/v1" "$TARGET_DIR/v2" "$TARGET_DIR/v3" "$TARGET_DIR/v4"
     
     # Список файлов для скачивания (пути относительно корня репозитория)
     files=(
@@ -55,9 +55,9 @@ else
     )
     
     for file in "${files[@]}"; do
-        dest_file="${file#pve_checks/}" # Удаляем префикс pve_checks/
-        echo "Скачивание $dest_file..."
-        curl -sSL "$RAW_URL/$file" -o "$TARGET_DIR/$dest_file" || {
+        echo "Скачивание $file..."
+        mkdir -p "$(dirname "$TARGET_DIR/$file")"
+        curl -sSL "$RAW_URL/$file" -o "$TARGET_DIR/$file" || {
             echo -e "\033[0;31m✖ Ошибка скачивания файла $file\033[0m"
             exit 1
         }
@@ -65,12 +65,12 @@ else
 fi
 
 # Делаем скрипты исполняемыми
-chmod +x "$TARGET_DIR/menu.sh"
-chmod +x "$TARGET_DIR"/v*/*.sh 2>/dev/null || true
+chmod +x "$SCRIPT_DIR/menu.sh"
+chmod +x "$SCRIPT_DIR"/v*/*.sh 2>/dev/null || true
 
 echo -e "\033[0;32m[+] Успешно настроено. Запуск главного меню...\033[0m"
 echo ""
 sleep 1
 
 # Запуск меню
-bash "$TARGET_DIR/menu.sh"
+bash "$SCRIPT_DIR/menu.sh"
