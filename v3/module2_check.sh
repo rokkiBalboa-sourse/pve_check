@@ -136,7 +136,7 @@ check_task "$BR_SRV" "Группа hq с пользователями" \
 # ============================================================
 log_report ""
 log_report "--- Задание 2: RAID (HQ-SRV) ---" "$YELLOW"
-check_task "$HQ_SRV" "RAID0 /dev/md3" \
+check_task "$HQ_SRV" "RAID5 /dev/md3" \
     "grep -q 'md3' /proc/mdstat" \
     "grep md3 /proc/mdstat | head -1"
 check_task "$HQ_SRV" "Монтирование /raid" \
