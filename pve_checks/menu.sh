@@ -18,6 +18,8 @@ CURRENT_VARIANT=""
 SCRIPT_DIR=""
 # Получаем директорию, в которой находится сам menu.sh
 SCRIPT_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Отслеживание запущенного в текущей сессии модуля
+CURRENT_ACTIVE_MODULE=""
 
 # Массивы ВМ для каждого модуля
 declare -a MODULE1_VMS=("10101" "10102" "10103" "10104" "10105" "10106")
@@ -62,9 +64,9 @@ prepare_module_vms() {
         fi
     done
 
-    # Если была запущена хотя бы одна ВМ, ждем 90 секунд
+    # Если была запущена хотя бы одна ВМ, ждем 30 секунд
     if [[ "$started_any" == true ]]; then
-        local timeout=90
+        local timeout=30
         echo -e "${YELLOW}  ⌛ Ожидание ${timeout} сек. для загрузки систем и запуска QEMU Agent...${NC}"
         for ((i=timeout; i>0; i--)); do
             printf "\r    Осталось %2d сек... " "$i"
@@ -187,7 +189,15 @@ run_module_check() {
     echo ""
     
     if [[ -f "$module_script" ]]; then
+        # Если ранее в этой сессии проверялся другой модуль, выключаем его машины
+        if [[ -n "$CURRENT_ACTIVE_MODULE" && "$CURRENT_ACTIVE_MODULE" != "$module_num" ]]; then
+            echo -e "${YELLOW}  [!] Обнаружена смена модуля. Выключаем машины предыдущего Модуля ${CURRENT_ACTIVE_MODULE}...${NC}"
+            stop_module_vms "$CURRENT_ACTIVE_MODULE"
+        fi
+        
         prepare_module_vms "$module_num"
+        CURRENT_ACTIVE_MODULE="$module_num"
+        
         bash "$module_script"
         local exit_code=$?
         echo ""
@@ -315,6 +325,13 @@ main_menu() {
                 echo -e "${GREEN}  ▶ Запуск последовательной проверки ВСЕХ модулей...${NC}"
                 echo ""
                 
+                # Если ранее в этой сессии проверялся одиночный модуль, тушим его
+                if [[ -n "$CURRENT_ACTIVE_MODULE" ]]; then
+                    echo -e "${YELLOW}  [!] Обнаружен запуск всех модулей. Выключаем машины предыдущего Модуля ${CURRENT_ACTIVE_MODULE}...${NC}"
+                    stop_module_vms "$CURRENT_ACTIVE_MODULE"
+                    CURRENT_ACTIVE_MODULE=""
+                fi
+
                 MODULES_OK=0
                 MODULES_FAIL=0
                 MODULES_TOTAL=0
