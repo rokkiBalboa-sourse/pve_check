@@ -26,16 +26,46 @@ declare -a MODULE1_VMS=("10101" "10102" "10103" "10104" "10105" "10106")
 declare -a MODULE2_VMS=("10201" "10202" "10203" "10204" "10205" "10206")
 declare -a MODULE3_VMS=("10301" "10302" "10303" "10304" "10305" "10306")
 
-# Функция подготовки (запуска) ВМ для выбранного модуля
+# Функция расширения выбора модулей в список номеров (например: "1-3" -> "1 2 3", "2-3" -> "2 3", "all" -> "1 2 3")
+expand_modules() {
+    local input="$1"
+    # Приводим к нижнему регистру и удаляем пробелы
+    input=$(echo "$input" | tr '[:upper:]' '[:lower:]' | tr -d ' ')
+    
+    if [[ "$input" == "all" || "$input" == "1-3" ]]; then
+        echo "1 2 3"
+        return 0
+    fi
+    if [[ "$input" == "2-3" ]]; then
+        echo "2 3"
+        return 0
+    fi
+    if [[ "$input" == "1-2" ]]; then
+        echo "1 2"
+        return 0
+    fi
+    # Поддержка перечисления через запятую (например, "1,3")
+    if [[ "$input" == *","* ]]; then
+        echo "$input" | tr ',' ' '
+        return 0
+    fi
+    # Одиночный модуль
+    if [[ "$input" =~ ^[1-3]$ ]]; then
+        echo "$input"
+        return 0
+    fi
+    return 1
+}
+
+# Функция подготовки (запуска) ВМ для выбранных модулей
 prepare_module_vms() {
-    local module_num="$1"
-    local -a vms
-    case $module_num in
-        1) vms=("${MODULE1_VMS[@]}") ;;
-        2) vms=("${MODULE2_VMS[@]}") ;;
-        3) vms=("${MODULE3_VMS[@]}") ;;
-        *) return 1 ;;
-    esac
+    local input="$1"
+    local modules
+    modules=$(expand_modules "$input")
+    if [[ $? -ne 0 || -z "$modules" ]]; then
+        echo -e "${RED}  ✖ Ошибка: Неверный формат выбора модулей: ${input}${NC}"
+        return 1
+    fi
 
     # Проверяем, существует ли утилита qm (чтобы скрипт не падал на обычной системе без PVE)
     if ! command -v qm &> /dev/null; then
@@ -43,8 +73,17 @@ prepare_module_vms() {
         return 0
     fi
 
+    local -a vms
+    for m in $modules; do
+        case $m in
+            1) vms+=("${MODULE1_VMS[@]}") ;;
+            2) vms+=("${MODULE2_VMS[@]}") ;;
+            3) vms+=("${MODULE3_VMS[@]}") ;;
+        esac
+    done
+
     echo ""
-    echo -e "${BLUE}  ▸ Проверка состояния виртуальных машин Модуля ${module_num}...${NC}"
+    echo -e "${BLUE}  ▸ Проверка состояния виртуальных машин выбранных модулей (${modules})...${NC}"
 
     local started_any=false
     for vmid in "${vms[@]}"; do
@@ -74,28 +113,36 @@ prepare_module_vms() {
         done
         echo -e "\n${GREEN}  ✔ Виртуальные машины запущены и готовы к проверке.${NC}"
     else
-        echo -e "${GREEN}  ✔ Все ВМ модуля уже запущены. Ожидание не требуется.${NC}"
+        echo -e "${GREEN}  ✔ Все ВМ выбранных модулей уже запущены. Ожидание не требуется.${NC}"
     fi
     echo ""
 }
 
-# Функция остановки всех ВМ для выбранного модуля
+# Функция остановки всех ВМ для выбранных модулей
 stop_module_vms() {
-    local module_num="$1"
-    local -a vms
-    case $module_num in
-        1) vms=("${MODULE1_VMS[@]}") ;;
-        2) vms=("${MODULE2_VMS[@]}") ;;
-        3) vms=("${MODULE3_VMS[@]}") ;;
-        *) return 1 ;;
-    esac
+    local input="$1"
+    local modules
+    modules=$(expand_modules "$input")
+    if [[ $? -ne 0 || -z "$modules" ]]; then
+        echo -e "${RED}  ✖ Ошибка: Неверный формат выбора модулей: ${input}${NC}"
+        return 1
+    fi
 
     if ! command -v qm &> /dev/null; then
         return 0
     fi
 
+    local -a vms
+    for m in $modules; do
+        case $m in
+            1) vms+=("${MODULE1_VMS[@]}") ;;
+            2) vms+=("${MODULE2_VMS[@]}") ;;
+            3) vms+=("${MODULE3_VMS[@]}") ;;
+        esac
+    done
+
     echo ""
-    echo -e "${BLUE}  ▸ Остановка виртуальных машин Модуля ${module_num}...${NC}"
+    echo -e "${BLUE}  ▸ Остановка виртуальных машин выбранных модулей (${modules})...${NC}"
 
     for vmid in "${vms[@]}"; do
         local status
@@ -105,7 +152,7 @@ stop_module_vms() {
             qm stop "$vmid" &>/dev/null
         fi
     done
-    echo -e "${GREEN}  ✔ Все ВМ Модуля ${module_num} остановлены.${NC}"
+    echo -e "${GREEN}  ✔ Все ВМ выбранных модулей (${modules}) остановлены.${NC}"
     echo ""
 }
 
@@ -424,38 +471,39 @@ main_menu() {
                 ;;
             5)
                 echo ""
-                echo -ne "${YELLOW}  Укажите номер модуля для запуска ВМ [1-3] (0 для отмены): ${NC}"
+                echo -ne "${YELLOW}  Укажите модули для запуска ВМ [1-3, 2-3, all] (0 для отмены): ${NC}"
                 read -r mod_choice
-                case $mod_choice in
-                    1|2|3)
+                if [[ "$mod_choice" == "0" ]]; then
+                    echo -e "${YELLOW}  Отменено.${NC}"
+                else
+                    if expand_modules "$mod_choice" &>/dev/null; then
                         prepare_module_vms "$mod_choice"
-                        ;;
-                    0)
-                        echo -e "${YELLOW}  Отменено.${NC}"
-                        ;;
-                    *)
-                        echo -e "${RED}  Неверный номер модуля: ${mod_choice}${NC}"
-                        ;;
-                esac
+                    else
+                        echo -e "${RED}  Неверный выбор: ${mod_choice}${NC}"
+                    fi
+                fi
                 ;;
             6)
                 echo ""
-                echo -ne "${YELLOW}  Укажите номер модуля для остановки ВМ [1-3] (0 для отмены): ${NC}"
+                echo -ne "${YELLOW}  Укажите модули для остановки ВМ [1-3, 2-3, all] (0 для отмены): ${NC}"
                 read -r mod_choice
-                case $mod_choice in
-                    1|2|3)
+                if [[ "$mod_choice" == "0" ]]; then
+                    echo -e "${YELLOW}  Отменено.${NC}"
+                else
+                    local expanded
+                    expanded=$(expand_modules "$mod_choice" 2>/dev/null)
+                    if [[ $? -eq 0 && -n "$expanded" ]]; then
                         stop_module_vms "$mod_choice"
-                        if [[ "$CURRENT_ACTIVE_MODULE" == "$mod_choice" ]]; then
-                            CURRENT_ACTIVE_MODULE=""
-                        fi
-                        ;;
-                    0)
-                        echo -e "${YELLOW}  Отменено.${NC}"
-                        ;;
-                    *)
-                        echo -e "${RED}  Неверный номер модуля: ${mod_choice}${NC}"
-                        ;;
-                esac
+                        # Сбрасываем CURRENT_ACTIVE_MODULE, если выключили его ВМ
+                        for m in $expanded; do
+                            if [[ "$CURRENT_ACTIVE_MODULE" == "$m" ]]; then
+                                CURRENT_ACTIVE_MODULE=""
+                            fi
+                        done
+                    else
+                        echo -e "${RED}  Неверный выбор: ${mod_choice}${NC}"
+                    fi
+                fi
                 ;;
             0)
                 echo ""
