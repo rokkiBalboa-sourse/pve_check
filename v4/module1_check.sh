@@ -354,9 +354,9 @@ check_ip "$BR_RTR" "enp7s2" "192.168.0.1/28"
 check_ip "$BR_SRV" "enp7s1" "192.168.0.2/28"
 # HQ-RTR
 check_ip "$HQ_RTR" "enp7s1" "172.16.70.2/28"
-check_ip "$HQ_RTR" "vlan100" "192.168.100.1/27"
-check_ip "$HQ_RTR" "vlan200" "192.168.200.1/24"
-check_ip "$HQ_RTR" "vlan999" "192.168.99.1/29"
+check_ip "$HQ_RTR" "vlan114" "192.168.100.1/27"
+check_ip "$HQ_RTR" "vlan214" "192.168.200.1/24"
+check_ip "$HQ_RTR" "vlan814" "192.168.99.1/29"
 # HQ-SRV
 check_ip "$HQ_SRV" "enp7s1" "192.168.100.2/27"
 

@@ -204,9 +204,9 @@ check_task "$BR_SRV" "Ansible ping HQ-CLI" \
 log_report ""
 log_report "--- Задание 6: Docker (BR-SRV) ---" "$YELLOW"
 check_service "$BR_SRV" "docker"
-check_task "$BR_SRV" "Docker tespapp" \
-    "docker ps --filter name=tespapp --format '{{.Status}}' 2>/dev/null | grep -q 'Up'" \
-    "docker ps --filter name=tespapp --format '{{.Status}}' 2>/dev/null || echo 'not_running'"
+check_task "$BR_SRV" "Docker site" \
+    "docker ps --filter name=site --format '{{.Status}}' 2>/dev/null | grep -q 'Up'" \
+    "docker ps --filter name=site --format '{{.Status}}' 2>/dev/null || echo 'not_running'"
 check_task "$BR_SRV" "Docker db" \
     "docker ps --filter name=db --format '{{.Status}}' 2>/dev/null | grep -q 'Up'" \
     "docker ps --filter name=db --format '{{.Status}}' 2>/dev/null || echo 'not_running'"
@@ -234,11 +234,11 @@ check_task "$HQ_RTR" "DNAT 2014->192.168.1.10" \
     "nft list ruleset 2>/dev/null | grep -q 'dport 2014 dnat to 192.168.1.10'" \
     "nft list ruleset 2>/dev/null | grep 'dport 2014' | grep -oP 'dnat to \K[^ ]+' | tr -d ' ' | head -1 || echo 'not_found'"
 
-check_task "$HQ_RTR" "DNAT 8080->192.168.1.10:80" \
+check_task "$HQ_RTR" "DNAT 8084->192.168.1.10:80" \
     "nft list ruleset 2>/dev/null | grep -q 'dport 8084 dnat to 192.168.1.10:80'" \
     "nft list ruleset 2>/dev/null | grep 'dport 8084' | grep -oP 'dnat to \K[^ ]+' | tr -d ' ' | head -1 || echo 'not_found'"
 
-check_task "$BR_RTR" "DNAT {8080,2026}->192.168.3.10" \
+check_task "$BR_RTR" "DNAT {8084,2014}->192.168.3.10" \
     "nft list ruleset 2>/dev/null | grep -E 'dport.*\{.*(8084|2014).*\}' | grep -q 'dnat to 192.168.3.10'" \
     "nft list ruleset 2>/dev/null | grep -E 'dport.*\{.*(8084|2014).*\}' | grep -oP 'dnat to \K[0-9.]+' | tr -d ' ' | head -1 || echo 'not_found'"
 
@@ -255,7 +255,7 @@ check_task "$ISP" "docker proxy -> 172.16.2.10:8084" \
     "grep -q 'proxy_pass http://172.16.2.10:8084' /etc/nginx/sites-enabled.d/r-proxy.conf 2>/dev/null" \
     "grep 'proxy_pass http://172.16.2.10:8084' /etc/nginx/sites-enabled.d/r-proxy.conf 2>/dev/null || echo 'not_found'"
 check_task "$ISP" "Basic auth WEB" \
-    "test -f /etc/nginx/.htpasswd && grep -q 'WEB' /etc/nginx/.htpasswd" \
+    "test -f /etc/nginx/.htpasswd && grep -q 'Erofeyс' /etc/nginx/.htpasswd" \
     "cat /etc/nginx/.htpasswd 2>/dev/null | cut -d: -f1 || echo 'file_not_found'"
 
 # ============================================================
