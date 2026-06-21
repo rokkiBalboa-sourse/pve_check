@@ -156,6 +156,47 @@ stop_module_vms() {
     echo ""
 }
 
+# Функция сброса стенда (откат всех ВМ к снапшоту 'exstart')
+reset_stand_snapshots() {
+    if ! command -v qm &> /dev/null; then
+        echo -e "${YELLOW}  [!] Утилита qm не найдена. Пропуск сброса стенда.${NC}"
+        return 0
+    fi
+
+    echo ""
+    echo -e "${RED}  ⚠ ВНИМАНИЕ: Это действие откатит ВСЕ виртуальные машины к снапшоту 'exstart'!${NC}"
+    echo -ne "${YELLOW}  Вы уверены, что хотите продолжить? [y/N]: ${NC}"
+    read -r confirm < /dev/tty
+    if [[ ! "$confirm" =~ ^[yY]$ ]]; then
+        echo -e "${YELLOW}  Сброс отменен.${NC}"
+        return 0
+    fi
+
+    local -a all_vms=("${MODULE1_VMS[@]}" "${MODULE2_VMS[@]}" "${MODULE3_VMS[@]}")
+    echo ""
+    echo -e "${BLUE}  ▸ Начинаем откат снапшотов всех виртуальных машин...${NC}"
+
+    for vmid in "${all_vms[@]}"; do
+        local status
+        status=$(qm status "$vmid" 2>/dev/null)
+        if [[ $? -ne 0 ]]; then
+            continue
+        fi
+
+        echo -e "${YELLOW}  ▸ Откат ВМ ${vmid} к 'exstart'...${NC}"
+        if qm rollback "$vmid" exstart &>/dev/null; then
+            echo -e "${GREEN}    ✔ Успешно.${NC}"
+        else
+            echo -e "${RED}    ✖ Ошибка отката (проверьте наличие снапшота 'exstart').${NC}"
+        fi
+    done
+
+    CURRENT_ACTIVE_MODULE=""
+    echo ""
+    echo -e "${GREEN}  ✔ Сброс стенда завершен!${NC}"
+    echo ""
+}
+
 
 # Функция выбора варианта
 choose_variant() {
@@ -325,9 +366,10 @@ show_menu() {
     echo -e "${YELLOW}  Быстрое управление питанием ВМ:${NC}"
     echo -e "  ${GREEN}5)${NC} ${YELLOW}Включить все ВМ выбранного модуля...${NC}"
     echo -e "  ${GREEN}6)${NC} ${YELLOW}Выключить все ВМ выбранного модуля...${NC}"
+    echo -e "  ${GREEN}7)${NC} ${YELLOW}Сбросить стенд (откат всех ВМ к снапшоту exstart)${NC}"
     echo ""
     
-    echo -e "  ${RED}0)${NC} ${YELLOW}Выход${NC}"
+    echo -e "  ${RED}0)${NC} ${YELLOW}Назад (к выбору варианта)${NC}"
     echo ""
 }
 
@@ -336,7 +378,7 @@ main_menu() {
     while true; do
         show_menu
         
-        echo -ne "${YELLOW}  Ваш выбор [0-6]: ${NC}"
+        echo -ne "${YELLOW}  Ваш выбор [0-7]: ${NC}"
         read -r choice
         
         local MODULE1_SCRIPT="${SCRIPT_DIR}/module1_check.sh"
@@ -505,20 +547,21 @@ main_menu() {
                     fi
                 fi
                 ;;
+            7)
+                reset_stand_snapshots
+                ;;
             0)
-                echo ""
-                echo -e "${CYAN}  До свидания!${NC}"
-                echo ""
-                exit 0
+                # Возврат к выбору варианта
+                return 0
                 ;;
             *)
                 echo ""
                 echo -e "${RED}  Неверный выбор: ${choice}${NC}"
-                echo -e "${YELLOW}  Пожалуйста, выберите число от 0 до 6${NC}"
+                echo -e "${YELLOW}  Пожалуйста, выберите число от 0 до 7${NC}"
                 ;;
         esac
         
-        # Пауза перед возвратом в меню (кроме выхода)
+        # Пауза перед возвратом в меню (кроме выхода/назад)
         if [[ "$choice" != "0" ]]; then
             echo ""
             echo -ne "${CYAN}  Нажмите ENTER чтобы продолжить...${NC}"
@@ -531,8 +574,8 @@ main_menu() {
 # Запуск
 # ============================================================
 
-# Сначала выбираем вариант
-choose_variant
-
-# Затем запускаем основное меню с выбранным SCRIPT_DIR
-main_menu
+# Сначала выбираем вариант, затем запускаем основное меню с выбранным SCRIPT_DIR
+while true; do
+    choose_variant
+    main_menu
+done
