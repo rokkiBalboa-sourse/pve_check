@@ -223,7 +223,7 @@ choose_variant() {
         echo -ne "${YELLOW}  Ваш выбор [0-5]: ${NC}"
         read -r choice
         case $choice in
-            1-t|2|3|4)
+            1|2|3|4)
                 CURRENT_VARIANT=$choice
                 # Устанавливаем SCRIPT_DIR в зависимости от варианта
                 case $choice in
