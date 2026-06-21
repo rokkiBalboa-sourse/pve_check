@@ -275,6 +275,10 @@ show_menu() {
     
     echo -e "  ${GREEN}4)${NC} ${YELLOW}Проверить ВСЕ модули последовательно${NC}"
     echo ""
+    echo -e "${YELLOW}  Быстрое управление питанием ВМ:${NC}"
+    echo -e "  ${GREEN}5)${NC} ${YELLOW}Включить все ВМ выбранного модуля...${NC}"
+    echo -e "  ${GREEN}6)${NC} ${YELLOW}Выключить все ВМ выбранного модуля...${NC}"
+    echo ""
     
     echo -e "  ${RED}0)${NC} ${YELLOW}Выход${NC}"
     echo ""
@@ -285,7 +289,7 @@ main_menu() {
     while true; do
         show_menu
         
-        echo -ne "${YELLOW}  Ваш выбор [0-4]: ${NC}"
+        echo -ne "${YELLOW}  Ваш выбор [0-6]: ${NC}"
         read -r choice
         
         local MODULE1_SCRIPT="${SCRIPT_DIR}/module1_check.sh"
@@ -418,6 +422,41 @@ main_menu() {
                 fi
                 echo -e "${CYAN}  ══════════════════════════════════════════${NC}"
                 ;;
+            5)
+                echo ""
+                echo -ne "${YELLOW}  Укажите номер модуля для запуска ВМ [1-3] (0 для отмены): ${NC}"
+                read -r mod_choice
+                case $mod_choice in
+                    1|2|3)
+                        prepare_module_vms "$mod_choice"
+                        ;;
+                    0)
+                        echo -e "${YELLOW}  Отменено.${NC}"
+                        ;;
+                    *)
+                        echo -e "${RED}  Неверный номер модуля: ${mod_choice}${NC}"
+                        ;;
+                esac
+                ;;
+            6)
+                echo ""
+                echo -ne "${YELLOW}  Укажите номер модуля для остановки ВМ [1-3] (0 для отмены): ${NC}"
+                read -r mod_choice
+                case $mod_choice in
+                    1|2|3)
+                        stop_module_vms "$mod_choice"
+                        if [[ "$CURRENT_ACTIVE_MODULE" == "$mod_choice" ]]; then
+                            CURRENT_ACTIVE_MODULE=""
+                        fi
+                        ;;
+                    0)
+                        echo -e "${YELLOW}  Отменено.${NC}"
+                        ;;
+                    *)
+                        echo -e "${RED}  Неверный номер модуля: ${mod_choice}${NC}"
+                        ;;
+                esac
+                ;;
             0)
                 echo ""
                 echo -e "${CYAN}  До свидания!${NC}"
@@ -427,7 +466,7 @@ main_menu() {
             *)
                 echo ""
                 echo -e "${RED}  Неверный выбор: ${choice}${NC}"
-                echo -e "${YELLOW}  Пожалуйста, выберите число от 0 до 4${NC}"
+                echo -e "${YELLOW}  Пожалуйста, выберите число от 0 до 6${NC}"
                 ;;
         esac
         
