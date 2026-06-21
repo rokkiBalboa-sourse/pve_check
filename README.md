@@ -9,7 +9,7 @@
 Для запуска проверки достаточно выполнить одну команду на вашем сервере PVE под пользователем **root**:
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/rokkiBalboa-sourse/pve_check/main/run.sh | bash
+bash <(curl -sSL https://raw.githubusercontent.com/rokkiBalboa-sourse/pve_check/main/run.sh)
 ```
 
 ### Что делает этот загрузчик (`run.sh`):
