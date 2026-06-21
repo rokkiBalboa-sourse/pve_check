@@ -130,7 +130,7 @@ choose_variant() {
     
     while true; do
         echo -ne "${YELLOW}  Ваш выбор [0-4]: ${NC}"
-        read -r choice < /dev/tty
+        read -r choice
         case $choice in
             1|2|3|4)
                 CURRENT_VARIANT=$choice
@@ -276,7 +276,7 @@ main_menu() {
         show_menu
         
         echo -ne "${YELLOW}  Ваш выбор [0-4]: ${NC}"
-        read -r choice < /dev/tty
+        read -r choice
         
         local MODULE1_SCRIPT="${SCRIPT_DIR}/module1_check.sh"
         local MODULE2_SCRIPT="${SCRIPT_DIR}/module2_check.sh"
@@ -418,7 +418,7 @@ main_menu() {
         if [[ "$choice" != "0" ]]; then
             echo ""
             echo -ne "${CYAN}  Нажмите ENTER чтобы продолжить...${NC}"
-            read -r < /dev/tty
+            read -r
         fi
     done
 }
