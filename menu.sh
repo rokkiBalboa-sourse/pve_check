@@ -156,7 +156,7 @@ stop_module_vms() {
     echo ""
 }
 
-# Функция сброса стенда (откат всех ВМ к снапшоту 'exstart')
+# Функция сброса стенда (сброс всех ВМ к снапшоту 'exstart')
 reset_stand_snapshots() {
     if ! command -v qm &> /dev/null; then
         echo -e "${YELLOW}  [!] Утилита qm не найдена. Пропуск сброса стенда.${NC}"
@@ -164,7 +164,7 @@ reset_stand_snapshots() {
     fi
 
     echo ""
-    echo -e "${RED}  ⚠ ВНИМАНИЕ: Это действие откатит ВСЕ виртуальные машины к снапшоту 'exstart'!${NC}"
+    echo -e "${RED}  ⚠ ВНИМАНИЕ: Это действие сбросит ВСЕ виртуальные машины к снапшоту 'exstart'!${NC}"
     echo -ne "${YELLOW}  Вы уверены, что хотите продолжить? [y/N]: ${NC}"
     read -r confirm < /dev/tty
     if [[ ! "$confirm" =~ ^[yY]$ ]]; then
@@ -174,7 +174,7 @@ reset_stand_snapshots() {
 
     local -a all_vms=("${MODULE1_VMS[@]}" "${MODULE2_VMS[@]}" "${MODULE3_VMS[@]}")
     echo ""
-    echo -e "${BLUE}  ▸ Начинаем откат снапшотов всех виртуальных машин...${NC}"
+    echo -e "${BLUE}  ▸ Начинаем сброс всех виртуальных машин...${NC}"
 
     for vmid in "${all_vms[@]}"; do
         local status
@@ -183,11 +183,11 @@ reset_stand_snapshots() {
             continue
         fi
 
-        echo -e "${YELLOW}  ▸ Откат ВМ ${vmid} к 'exstart'...${NC}"
+        echo -e "${YELLOW}  ▸ Сброс ВМ ${vmid} к 'exstart'...${NC}"
         if qm rollback "$vmid" exstart &>/dev/null; then
             echo -e "${GREEN}    ✔ Успешно.${NC}"
         else
-            echo -e "${RED}    ✖ Ошибка отката (проверьте наличие снапшота 'exstart').${NC}"
+            echo -e "${RED}    ✖ Ошибка сброса (проверьте наличие снапшота 'exstart').${NC}"
         fi
     done
 
@@ -211,10 +211,10 @@ choose_variant() {
         echo ""
         echo -e "${YELLOW}  Выберите вариант:${NC}"
         echo ""
-        echo -e "  ${GREEN}1)${NC} ${YELLOW}Вариант 1${NC}"
-        echo -e "  ${GREEN}2)${NC} ${YELLOW}Вариант 2${NC}"
-        echo -e "  ${GREEN}3)${NC} ${YELLOW}Вариант 3${NC}"
-        echo -e "  ${GREEN}4)${NC} ${YELLOW}Вариант 4${NC}"
+        echo -e "  ${GREEN}1)${NC} ${YELLOW}Вариант 1 (КОД 09.02.06-1-2026-ПУ)${NC}"
+        echo -e "  ${GREEN}2)${NC} ${YELLOW}Вариант 2 (КОД 09.02.06-1-2026-БУ)${NC}"
+        echo -e "  ${GREEN}3)${NC} ${YELLOW}Вариант 3 (КОД 09.02.06-1-2026-ПУ)${NC}"
+        echo -e "  ${GREEN}4)${NC} ${YELLOW}Вариант 4 (КОД 09.02.06-1-2026-БУ)${NC}"
         echo -e "  ${GREEN}5)${NC} ${YELLOW}Сброс стенда${NC}"
         echo ""
         echo -e "  ${RED}0)${NC} ${YELLOW}Выход${NC}"
@@ -223,7 +223,7 @@ choose_variant() {
         echo -ne "${YELLOW}  Ваш выбор [0-5]: ${NC}"
         read -r choice
         case $choice in
-            1|2|3|4)
+            1-t|2|3|4)
                 CURRENT_VARIANT=$choice
                 # Устанавливаем SCRIPT_DIR в зависимости от варианта
                 case $choice in
