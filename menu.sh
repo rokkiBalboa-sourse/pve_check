@@ -200,26 +200,27 @@ reset_stand_snapshots() {
 
 # Функция выбора варианта
 choose_variant() {
-    clear
-    echo -e "${CYAN}╔══════════════════════════════════════════════════╗${NC}"
-    echo -e "${CYAN}║                                                  ║${NC}"
-    echo -e "${CYAN}║${YELLOW}             DEMOEXAM-CHECKER v1.2                ${CYAN}║${NC}"
-    echo -e "${CYAN}║${BLUE}            Выбор варианта проверки               ${CYAN}║${NC}"
-    echo -e "${CYAN}║                                                  ║${NC}"
-    echo -e "${CYAN}╚══════════════════════════════════════════════════╝${NC}"
-    echo ""
-    echo -e "${YELLOW}  Выберите вариант:${NC}"
-    echo ""
-    echo -e "  ${GREEN}1)${NC} ${YELLOW}Вариант 1${NC}"
-    echo -e "  ${GREEN}2)${NC} ${YELLOW}Вариант 2${NC}"
-    echo -e "  ${GREEN}3)${NC} ${YELLOW}Вариант 3${NC}"
-    echo -e "  ${GREEN}4)${NC} ${YELLOW}Вариант 4${NC}"
-    echo ""
-    echo -e "  ${RED}0)${NC} ${YELLOW}Выход${NC}"
-    echo ""
-    
     while true; do
-        echo -ne "${YELLOW}  Ваш выбор [0-4]: ${NC}"
+        clear
+        echo -e "${CYAN}╔══════════════════════════════════════════════════╗${NC}"
+        echo -e "${CYAN}║                                                  ║${NC}"
+        echo -e "${CYAN}║${YELLOW}             DEMOEXAM-CHECKER v1.2                ${CYAN}║${NC}"
+        echo -e "${CYAN}║${BLUE}            Выбор варианта проверки               ${CYAN}║${NC}"
+        echo -e "${CYAN}║                                                  ║${NC}"
+        echo -e "${CYAN}╚══════════════════════════════════════════════════╝${NC}"
+        echo ""
+        echo -e "${YELLOW}  Выберите вариант:${NC}"
+        echo ""
+        echo -e "  ${GREEN}1)${NC} ${YELLOW}Вариант 1${NC}"
+        echo -e "  ${GREEN}2)${NC} ${YELLOW}Вариант 2${NC}"
+        echo -e "  ${GREEN}3)${NC} ${YELLOW}Вариант 3${NC}"
+        echo -e "  ${GREEN}4)${NC} ${YELLOW}Вариант 4${NC}"
+        echo -e "  ${GREEN}5)${NC} ${YELLOW}Сброс стенда (откат всех ВМ к снапшоту exstart)${NC}"
+        echo ""
+        echo -e "  ${RED}0)${NC} ${YELLOW}Выход${NC}"
+        echo ""
+        
+        echo -ne "${YELLOW}  Ваш выбор [0-5]: ${NC}"
         read -r choice
         case $choice in
             1|2|3|4)
@@ -233,6 +234,11 @@ choose_variant() {
                 esac
                 return 0
                 ;;
+            5)
+                reset_stand_snapshots
+                echo -ne "${CYAN}  Нажмите ENTER чтобы продолжить...${NC}"
+                read -r
+                ;;
             0)
                 echo ""
                 echo -e "${CYAN}  До свидания!${NC}"
@@ -241,7 +247,8 @@ choose_variant() {
                 ;;
             *)
                 echo -e "${RED}  Неверный выбор: ${choice}${NC}"
-                echo -e "${YELLOW}  Пожалуйста, выберите число от 0 до 4${NC}"
+                echo -e "${YELLOW}  Пожалуйста, выберите число от 0 до 5${NC}"
+                sleep 2
                 ;;
         esac
     done
@@ -366,7 +373,6 @@ show_menu() {
     echo -e "${YELLOW}  Быстрое управление питанием ВМ:${NC}"
     echo -e "  ${GREEN}5)${NC} ${YELLOW}Включить все ВМ выбранного модуля...${NC}"
     echo -e "  ${GREEN}6)${NC} ${YELLOW}Выключить все ВМ выбранного модуля...${NC}"
-    echo -e "  ${GREEN}7)${NC} ${YELLOW}Сбросить стенд (откат всех ВМ к снапшоту exstart)${NC}"
     echo ""
     
     echo -e "  ${RED}0)${NC} ${YELLOW}Назад (к выбору варианта)${NC}"
@@ -378,7 +384,7 @@ main_menu() {
     while true; do
         show_menu
         
-        echo -ne "${YELLOW}  Ваш выбор [0-7]: ${NC}"
+        echo -ne "${YELLOW}  Ваш выбор [0-6]: ${NC}"
         read -r choice
         
         local MODULE1_SCRIPT="${SCRIPT_DIR}/module1_check.sh"
@@ -547,9 +553,6 @@ main_menu() {
                     fi
                 fi
                 ;;
-            7)
-                reset_stand_snapshots
-                ;;
             0)
                 # Возврат к выбору варианта
                 return 0
@@ -557,7 +560,7 @@ main_menu() {
             *)
                 echo ""
                 echo -e "${RED}  Неверный выбор: ${choice}${NC}"
-                echo -e "${YELLOW}  Пожалуйста, выберите число от 0 до 7${NC}"
+                echo -e "${YELLOW}  Пожалуйста, выберите число от 0 до 6${NC}"
                 ;;
         esac
         
