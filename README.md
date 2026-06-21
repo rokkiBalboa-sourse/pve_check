@@ -40,11 +40,14 @@ bash <(curl -sSL https://raw.githubusercontent.com/rokkiBalboa-sourse/pve_check/
 
 ## Скриншоты работы
 
+### Выбор источника загрузки (`run.sh`)
+![Выбор источника](screenshots/download_menu.png)
+
 ### Главное меню (`menu.sh`)
 ![Главное меню](screenshots/menu.png)
 
 ### Пример прохождения проверки
-![Пример проверки](screenshots/var1.png)
+![Пример проверки](screenshots/var.png)
 
 ---
 
