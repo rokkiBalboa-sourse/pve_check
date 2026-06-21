@@ -125,7 +125,7 @@ choose_variant() {
     echo -e "  ${GREEN}1)${NC} ${YELLOW}Вариант 1${NC}"
     echo -e "  ${GREEN}2)${NC} ${YELLOW}Вариант 2${NC}"
     echo -e "  ${GREEN}3)${NC} ${YELLOW}Вариант 3${NC}"
-    echo -e "  ${GREEN}4)${NC} ${YELLOW}Подготовительный${NC}"
+    echo -e "  ${GREEN}4)${NC} ${YELLOW}Вариант 4${NC}"
     echo ""
     echo -e "  ${RED}0)${NC} ${YELLOW}Выход${NC}"
     echo ""
