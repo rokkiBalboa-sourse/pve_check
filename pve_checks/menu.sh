@@ -19,6 +19,95 @@ SCRIPT_DIR=""
 # Получаем директорию, в которой находится сам menu.sh
 SCRIPT_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# Массивы ВМ для каждого модуля
+declare -a MODULE1_VMS=("10101" "10102" "10103" "10104" "10105" "10106")
+declare -a MODULE2_VMS=("10201" "10202" "10203" "10204" "10205" "10206")
+declare -a MODULE3_VMS=("10301" "10302" "10303" "10304" "10305" "10306")
+
+# Функция подготовки (запуска) ВМ для выбранного модуля
+prepare_module_vms() {
+    local module_num="$1"
+    local -a vms
+    case $module_num in
+        1) vms=("${MODULE1_VMS[@]}") ;;
+        2) vms=("${MODULE2_VMS[@]}") ;;
+        3) vms=("${MODULE3_VMS[@]}") ;;
+        *) return 1 ;;
+    esac
+
+    # Проверяем, существует ли утилита qm (чтобы скрипт не падал на обычной системе без PVE)
+    if ! command -v qm &> /dev/null; then
+        echo -e "${YELLOW}  [!] Утилита qm не найдена. Пропуск управления питанием ВМ.${NC}"
+        return 0
+    fi
+
+    echo ""
+    echo -e "${BLUE}  ▸ Проверка состояния виртуальных машин Модуля ${module_num}...${NC}"
+
+    local started_any=false
+    for vmid in "${vms[@]}"; do
+        local status
+        status=$(qm status "$vmid" 2>/dev/null)
+        if [[ $? -ne 0 ]]; then
+            echo -e "${RED}  ✖ ВМ с ID ${vmid} не найдена в Proxmox!${NC}"
+            continue
+        fi
+
+        if echo "$status" | grep -q "status: stopped"; then
+            echo -e "${YELLOW}  ▸ ВМ ${vmid} выключена. Запуск...${NC}"
+            qm start "$vmid" &>/dev/null
+            started_any=true
+        else
+            echo -e "${GREEN}  ✔ ВМ ${vmid} уже запущена.${NC}"
+        fi
+    done
+
+    # Если была запущена хотя бы одна ВМ, ждем 90 секунд
+    if [[ "$started_any" == true ]]; then
+        local timeout=90
+        echo -e "${YELLOW}  ⌛ Ожидание ${timeout} сек. для загрузки систем и запуска QEMU Agent...${NC}"
+        for ((i=timeout; i>0; i--)); do
+            printf "\r    Осталось %2d сек... " "$i"
+            sleep 1
+        done
+        echo -e "\n${GREEN}  ✔ Виртуальные машины запущены и готовы к проверке.${NC}"
+    else
+        echo -e "${GREEN}  ✔ Все ВМ модуля уже запущены. Ожидание не требуется.${NC}"
+    fi
+    echo ""
+}
+
+# Функция остановки всех ВМ для выбранного модуля
+stop_module_vms() {
+    local module_num="$1"
+    local -a vms
+    case $module_num in
+        1) vms=("${MODULE1_VMS[@]}") ;;
+        2) vms=("${MODULE2_VMS[@]}") ;;
+        3) vms=("${MODULE3_VMS[@]}") ;;
+        *) return 1 ;;
+    esac
+
+    if ! command -v qm &> /dev/null; then
+        return 0
+    fi
+
+    echo ""
+    echo -e "${BLUE}  ▸ Остановка виртуальных машин Модуля ${module_num}...${NC}"
+
+    for vmid in "${vms[@]}"; do
+        local status
+        status=$(qm status "$vmid" 2>/dev/null)
+        if [[ $? -eq 0 ]] && echo "$status" | grep -q "status: running"; then
+            echo -e "${YELLOW}  ▸ Останавливаем ВМ ${vmid}...${NC}"
+            qm stop "$vmid" &>/dev/null
+        fi
+    done
+    echo -e "${GREEN}  ✔ Все ВМ Модуля ${module_num} остановлены.${NC}"
+    echo ""
+}
+
+
 # Функция выбора варианта
 choose_variant() {
     clear
@@ -98,6 +187,7 @@ run_module_check() {
     echo ""
     
     if [[ -f "$module_script" ]]; then
+        prepare_module_vms "$module_num"
         bash "$module_script"
         local exit_code=$?
         echo ""
@@ -233,8 +323,11 @@ main_menu() {
                 echo -e "${BLUE}  ▸ [1/3] Проверка Модуля 1...${NC}"
                 MODULES_TOTAL=$((MODULES_TOTAL + 1))
                 if [[ -f "$MODULE1_SCRIPT" ]]; then
+                    prepare_module_vms "1"
                     bash "$MODULE1_SCRIPT"
-                    if [[ $? -eq 0 ]]; then
+                    local exit_code=$?
+                    stop_module_vms "1"
+                    if [[ $exit_code -eq 0 ]]; then
                         echo -e "${GREEN}  ✔ Модуль 1 завершен${NC}"
                         MODULES_OK=$((MODULES_OK + 1))
                     else
@@ -251,8 +344,11 @@ main_menu() {
                 echo -e "${BLUE}  ▸ [2/3] Проверка Модуля 2...${NC}"
                 MODULES_TOTAL=$((MODULES_TOTAL + 1))
                 if [[ -f "$MODULE2_SCRIPT" ]]; then
+                    prepare_module_vms "2"
                     bash "$MODULE2_SCRIPT"
-                    if [[ $? -eq 0 ]]; then
+                    local exit_code=$?
+                    stop_module_vms "2"
+                    if [[ $exit_code -eq 0 ]]; then
                         echo -e "${GREEN}  ✔ Модуль 2 завершен${NC}"
                         MODULES_OK=$((MODULES_OK + 1))
                     else
@@ -269,8 +365,11 @@ main_menu() {
                 echo -e "${BLUE}  ▸ [3/3] Проверка Модуля 3...${NC}"
                 MODULES_TOTAL=$((MODULES_TOTAL + 1))
                 if [[ -f "$MODULE3_SCRIPT" ]]; then
+                    prepare_module_vms "3"
                     bash "$MODULE3_SCRIPT"
-                    if [[ $? -eq 0 ]]; then
+                    local exit_code=$?
+                    stop_module_vms "3"
+                    if [[ $exit_code -eq 0 ]]; then
                         echo -e "${GREEN}  ✔ Модуль 3 завершен${NC}"
                         MODULES_OK=$((MODULES_OK + 1))
                     else
