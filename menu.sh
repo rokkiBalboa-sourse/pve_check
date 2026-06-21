@@ -215,7 +215,7 @@ choose_variant() {
         echo -e "  ${GREEN}2)${NC} ${YELLOW}Вариант 2${NC}"
         echo -e "  ${GREEN}3)${NC} ${YELLOW}Вариант 3${NC}"
         echo -e "  ${GREEN}4)${NC} ${YELLOW}Вариант 4${NC}"
-        echo -e "  ${GREEN}5)${NC} ${YELLOW}Сброс стенда (откат всех ВМ к снапшоту exstart)${NC}"
+        echo -e "  ${GREEN}5)${NC} ${YELLOW}Сброс стенда${NC}"
         echo ""
         echo -e "  ${RED}0)${NC} ${YELLOW}Выход${NC}"
         echo ""
