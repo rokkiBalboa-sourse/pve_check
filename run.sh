@@ -15,7 +15,7 @@ RAW_URL="https://raw.githubusercontent.com/rokkiBalboa-sourse/pve_check/main"
 TARGET_DIR="/root/pve_checks"
 
 # Сюда пользователь вставит свою ссылку на Яндекс.Диск
-YANDEX_DISK_PUBLIC_LINK="<YOUR_YANDEX_DISK_PUBLIC_LINK>"
+YANDEX_DISK_PUBLIC_LINK="https://disk.yandex.ru/d/jABgos5iyXaFpg"
 
 # Функция отрисовки прогресс-бара
 show_progress() {
